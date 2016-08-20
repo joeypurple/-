@@ -102,11 +102,12 @@ public class MainActivity extends AppCompatActivity {
     private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList> {
 
         String userInput = mSearchField.getText().toString();
+        String firstWord = userInput.substring(0, userInput.indexOf(" "));
 
         @Override
         protected ArrayList<Books> doInBackground(URL... urls) {
 
-            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + userInput);
+            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + firstWord );
             Log.v("EditText", url.toString());
 
             if (userInput == null || userInput.equals("")) {
@@ -116,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 //Perform HTTP request to the URL and receive a JSON response back
                 String jsonResponse = "";
                 try {
-                    jsonResponse = makeHTTPRequest(urls[0]);
+                    jsonResponse = makeHTTPRequest(url);
                 } catch (IOException e) {
                     Log.e(LOG_TAG, "MainActivity " + "IOException", e);
                 }
@@ -162,6 +163,8 @@ public class MainActivity extends AppCompatActivity {
         }
         return url;
     }
+
+
 
 
     /**
