@@ -33,8 +33,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes?maxResults=1&q=";
 
     Button mSearchButton;
-
     EditText mSearchField;
+    BooksAdapter adapter;
+    ListView listView;
+    ArrayList<Books> books;
+
 
 
     @Override
@@ -45,54 +48,104 @@ public class MainActivity extends AppCompatActivity {
         mSearchButton = (Button) findViewById(R.id.search_button);
         mSearchField = (EditText) findViewById(R.id.search_editText);
 
-        ArrayList<Books> books = new ArrayList<>();
+        books = new ArrayList<>();
 
         // Create the adapter to convert the array to views
-        BooksAdapter adapter = new BooksAdapter(this, books);
+        adapter = new BooksAdapter(this, books);
 
         // Attach the adapter to a ListView
-        ListView listView = (ListView) findViewById(R.id.listView);
+        listView = (ListView) findViewById(R.id.listView);
         listView.setAdapter(adapter);
 
         mSearchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String userInput = mSearchField.getText().toString();
-                String queryString = GOOGLE_BOOKS_BASE_URL + userInput;
-                URL url = createUrl(queryString);
-
-                Log.v("EditText", url.toString());
-
-                if (userInput == null || userInput.equals("")) {
-                    Toast.makeText(MainActivity.this, "Please enter search terms.", Toast.LENGTH_SHORT).show();
-                } else {
                     BookAsyncTask task = new BookAsyncTask();
-                    task.execute(url);
-                }
+                    task.execute();
             }
         });
+
+        if (savedInstanceState != null) {
+            books = (ArrayList<Books>) savedInstanceState.getSerializable("myKey");
+            adapter.clear();
+            adapter.addAll(books);
+            adapter.notifyDataSetChanged();
+        }
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle savedState) {
+        super.onSaveInstanceState(savedState);
+        savedState.putSerializable("myKey", books);
+
+        Toast.makeText(this, "onSaveInstanceState()", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "onSaveInstanceState() List Size: " + books.size(), Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * update the screen to display information from the given {@link Books}
+     * @param booksList
+     */
+    private void updateUi(ArrayList<Books> booksList) {
+        books.clear();
+        books.addAll(booksList);
+
+        adapter.clear();
+        adapter.addAll(booksList);
+        adapter.notifyDataSetChanged();
+    }
+
+    /**
+     * {@link AsyncTask} to perform the network request on a background thread, and then
+     * update the UI with the first earthquake in the response.
+     */
     private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList> {
+
+        String userInput = mSearchField.getText().toString();
 
         @Override
         protected ArrayList<Books> doInBackground(URL... urls) {
 
-            //Perform HTTP request to the URL and receive a JSON response back
-            String jsonResponse = "";
-            try {
-                jsonResponse = makeHTTPRequest(urls[0]);
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "MainActivity " + "IOException", e);
+            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + userInput);
+            Log.v("EditText", url.toString());
+
+            if (userInput == null || userInput.equals("")) {
+                Toast.makeText(MainActivity.this, "Please enter search terms.", Toast.LENGTH_SHORT).show();
+            } else {
+
+                //Perform HTTP request to the URL and receive a JSON response back
+                String jsonResponse = "";
+                try {
+                    jsonResponse = makeHTTPRequest(urls[0]);
+                } catch (IOException e) {
+                    Log.e(LOG_TAG, "MainActivity " + "IOException", e);
+                }
+
+
+                //Extract relevant fields from the JSON response and create an {@link Event} object
+                books = extractFeatureFromJson(jsonResponse);
+
+                // Return the {@link Books} object as the result of the {@link BookAsyncTask}
+            }
+            return books;
             }
 
-            //Extract relevant fields from the JSON response and create an {@link Event} object
-            ArrayList<Books> books = extractFeatureFromJson(jsonResponse);
 
-            // Return the {@link Books} object as the result of the {@link BookAsyncTask}
-            return books;
+        /**
+         * Update the screen with the given book (which was the result of the
+         * {@link BookAsyncTask}
+         */
+        protected void onPostExecute(ArrayList<Books> booksList) {
+            if (booksList == null) {
+                return;
+            }
+            updateUi(booksList);
         }
     }
+
+
+
+
 
     /**
      * Returns new URL object from the given String URL.
@@ -173,37 +226,46 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<Books> extractFeatureFromJson(String booksJSON) {
 
-        ArrayList<Books> bookList = new ArrayList<>();
-
         // if JSON string is empty or null, return early
         if (TextUtils.isEmpty(booksJSON)) {
             return null;
         }
+
+        ArrayList booksList = new ArrayList();
+
         try {
             JSONObject baseJsonResponse = new JSONObject(booksJSON);
             JSONArray itemsArray = baseJsonResponse.getJSONArray("items");
 
             // If there are results in the features array
-            if (itemsArray.length() > 0) {
+            for (int i = 0; i< itemsArray.length(); i++) {
                 //Extract out the first feature
-                JSONObject firstFeature = itemsArray.getJSONObject(0);
+                JSONObject firstFeature = itemsArray.getJSONObject(i);
                 JSONObject items = firstFeature.getJSONObject("volumeInfo");
 
                 //Extract out the title, time, and tsunami values
                 String title = items.getString("title");
-                String authors = items.getString("authors");
+                String authors = "";
+                JSONArray authorJsonArray = items.optJSONArray("authors");
 
-                //Create a new {@link Event} object
-                Books books = new Books(title, authors);
-                //Add the book to the array
-                bookList.add(books);
-            } else if (itemsArray.length() == 0) {
+                if (items.has("authors")) {
+                    if (authorJsonArray.length() > 0) {
+                        for (int j = 0; j < authorJsonArray.length(); j++){
+                            authors = authorJsonArray.optString(j) + "";
+                        }
+                    }
+                }
+
+                //Create a new {@link Event} object, add the book to the array
+                booksList.add(new Books(title, authors));
+            }
+            if (itemsArray.length() == 0) {
                 Toast.makeText(MainActivity.this, "No results found.", Toast.LENGTH_SHORT).show();
                 return null;
             }
         } catch (JSONException e) {
             Log.e(LOG_TAG, "Problem parsing the book JSON results", e);
         }
-        return bookList;
+        return booksList;
     }
 }
