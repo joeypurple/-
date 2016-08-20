@@ -30,14 +30,13 @@ public class MainActivity extends AppCompatActivity {
     // Tag for Log Messages
     public static final String LOG_TAG = MainActivity.class.getSimpleName();
     // Tag for API URL
-    private static final String GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes?maxResults=1&q=";
+    private static final String GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes?maxResults=3&q=";
 
     Button mSearchButton;
     EditText mSearchField;
     BooksAdapter adapter;
     ListView listView;
     ArrayList<Books> books;
-
 
 
     @Override
@@ -78,8 +77,8 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedState);
         savedState.putSerializable("myKey", books);
 
-        Toast.makeText(this, "onSaveInstanceState()", Toast.LENGTH_LONG).show();
-        Toast.makeText(this, "onSaveInstanceState() List Size: " + books.size(), Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "onSaveInstanceState()", Toast.LENGTH_LONG).show();
+        //Toast.makeText(this, "onSaveInstanceState() List Size: " + books.size(), Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -95,6 +94,10 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
+    public static String firstWord(String input) {
+        return input.split(" ")[0]; //Create array of words and return the 0th word
+    }
+
     /**
      * {@link AsyncTask} to perform the network request on a background thread, and then
      * update the UI with the first earthquake in the response.
@@ -102,17 +105,25 @@ public class MainActivity extends AppCompatActivity {
     private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList> {
 
         String userInput = mSearchField.getText().toString();
-        String firstWord = userInput.substring(0, userInput.indexOf(" "));
+        String fw = null;
 
         @Override
         protected ArrayList<Books> doInBackground(URL... urls) {
 
-            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + firstWord );
-            Log.v("EditText", url.toString());
+            if (userInput.length() > 1) {
+                fw = firstWord(userInput);
+            } else
+                if (userInput == null || userInput.equals("")) {
+                   Log.e(LOG_TAG, "MainActivity " + "null if user inputs nothing");
 
-            if (userInput == null || userInput.equals("")) {
-                Toast.makeText(MainActivity.this, "Please enter search terms.", Toast.LENGTH_SHORT).show();
-            } else {
+                     //TOAST MSG seems to make it crash??
+                     Toast.makeText(MainActivity.this, "Please enter search terms.", Toast.LENGTH_SHORT).show();
+
+            return books;
+            }
+
+            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + fw);
+            Log.v("EditText", url.toString());
 
                 //Perform HTTP request to the URL and receive a JSON response back
                 String jsonResponse = "";
@@ -127,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                 books = extractFeatureFromJson(jsonResponse);
 
                 // Return the {@link Books} object as the result of the {@link BookAsyncTask}
-            }
+
             return books;
             }
 
@@ -143,10 +154,6 @@ public class MainActivity extends AppCompatActivity {
             updateUi(booksList);
         }
     }
-
-
-
-
 
     /**
      * Returns new URL object from the given String URL.
