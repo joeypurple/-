@@ -8,4 +8,24 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="TitleResult">
+        <item name="android:textColor">@color/textcolor</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">"sans-serif-light"</item>
+    </style>
+
+    <style name="AuthorResult">
+        <item name="android:textColor">@color/textcolor</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <style name="Headers">
+        <item name="android:textColor">@color/textviewcolor</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">"sans-serif-medium"</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+
 </resources>

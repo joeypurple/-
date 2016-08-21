@@ -77,8 +77,6 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedState);
         savedState.putSerializable("myKey", books);
 
-        //Toast.makeText(this, "onSaveInstanceState()", Toast.LENGTH_LONG).show();
-        //Toast.makeText(this, "onSaveInstanceState() List Size: " + books.size(), Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -95,8 +93,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static String firstWord(String input) {
-        return input.split(" ")[0]; //Create array of words and return the 0th word
+       return input.split(" ")[0]; //Create array of words and return the 0th word
     }
+
+    //public static String secondWord(String input) {
+
+      //  if (secondWord(input) == null) {
+        //    return null;
+        //}
+
+//        return input.split(" ")[1]; //Create an array of words and return the 1st word
+  //  }
 
     /**
      * {@link AsyncTask} to perform the network request on a background thread, and then
@@ -106,12 +113,14 @@ public class MainActivity extends AppCompatActivity {
 
         String userInput = mSearchField.getText().toString();
         String fw = null;
+      //  String sw = null;
 
         @Override
         protected ArrayList<Books> doInBackground(URL... urls) {
 
             if (userInput.length() > 1) {
                 fw = firstWord(userInput);
+       //         sw = secondWord(userInput);
             } else
                 if (userInput == null || userInput.equals("")) {
                    Log.e(LOG_TAG, "MainActivity " + "null if user inputs nothing");
@@ -135,11 +144,11 @@ public class MainActivity extends AppCompatActivity {
 
 
                 //Extract relevant fields from the JSON response and create an {@link Event} object
-                books = extractFeatureFromJson(jsonResponse);
+                //books = extractFeatureFromJson(jsonResponse);
 
                 // Return the {@link Books} object as the result of the {@link BookAsyncTask}
 
-            return books;
+            return extractFeatureFromJson(jsonResponse);
             }
 
 
