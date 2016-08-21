@@ -30,13 +30,13 @@ public class MainActivity extends AppCompatActivity {
     // Tag for Log Messages
     public static final String LOG_TAG = MainActivity.class.getSimpleName();
     // Tag for API URL
-    private static final String GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes?maxResults=3&q=";
+    private static final String GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes?maxResults=10&q=";
 
     Button mSearchButton;
-    EditText mSearchField;
-    BooksAdapter adapter;
-    ListView listView;
-    ArrayList<Books> books;
+    private EditText mSearchField;
+    private BooksAdapter adapter;
+    private ListView listView;
+    private ArrayList<Books> books;
 
 
     @Override
@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
      * {@link AsyncTask} to perform the network request on a background thread, and then
      * update the UI with the first earthquake in the response.
      */
-    private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList> {
+    private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList<Books>> {
 
         String userInput = mSearchField.getText().toString();
         String fw = null;
@@ -147,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
          * Update the screen with the given book (which was the result of the
          * {@link BookAsyncTask}
          */
+        @Override
         protected void onPostExecute(ArrayList<Books> booksList) {
             if (booksList == null) {
                 return;
