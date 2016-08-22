@@ -41,10 +41,6 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private ArrayList<Books> books;
 
-    public static String firstWord(String input) {
-        return input.split(" ")[0]; //Create array of words and return the 0th word
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -242,22 +238,20 @@ public class MainActivity extends AppCompatActivity {
      */
     private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList<Books>> {
 
-        String userInput = mSearchField.getText().toString();
-        String fw = null;
+        String userInput = mSearchField.getText().toString().replace(" ", "+");
 
         @Override
         protected ArrayList<Books> doInBackground(URL... urls) {
 
 
             if (userInput.length() > 1) {
-                fw = firstWord(userInput);
             } else if (userInput == null || userInput.equals("")) {
                 Log.e(LOG_TAG, "MainActivity " + "null if user inputs nothing");
 
                 return books;
             }
 
-            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + fw);
+            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + userInput);
             Log.v("EditText", url.toString());
 
             //Perform HTTP request to the URL and receive a JSON response back
