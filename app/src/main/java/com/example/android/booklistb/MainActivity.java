@@ -1,5 +1,8 @@
 package com.example.android.booklistb;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -38,6 +41,9 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private ArrayList<Books> books;
 
+    public static String firstWord(String input) {
+        return input.split(" ")[0]; //Create array of words and return the 0th word
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
         mSearchButton = (Button) findViewById(R.id.search_button);
         mSearchField = (EditText) findViewById(R.id.search_editText);
+
 
         books = new ArrayList<>();
 
@@ -57,12 +64,14 @@ public class MainActivity extends AppCompatActivity {
         listView.setAdapter(adapter);
 
         mSearchButton.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
-                    BookAsyncTask task = new BookAsyncTask();
-                    task.execute();
+                BookAsyncTask task = new BookAsyncTask();
+                task.execute();
             }
         });
+
 
         if (savedInstanceState != null) {
             books = (ArrayList<Books>) savedInstanceState.getSerializable("myKey");
@@ -81,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * update the screen to display information from the given {@link Books}
+     *
      * @param booksList
      */
     private void updateUi(ArrayList<Books> booksList) {
@@ -90,79 +100,19 @@ public class MainActivity extends AppCompatActivity {
         adapter.clear();
         adapter.addAll(booksList);
         adapter.notifyDataSetChanged();
+        listView.setAdapter(new BooksAdapter(MainActivity.this, books));
     }
 
-    public static String firstWord(String input) {
-       return input.split(" ")[0]; //Create array of words and return the 0th word
-    }
-
-    //public static String secondWord(String input) {
-
-      //  if (secondWord(input) == null) {
-        //    return null;
-        //}
-
-//        return input.split(" ")[1]; //Create an array of words and return the 1st word
-  //  }
 
     /**
-     * {@link AsyncTask} to perform the network request on a background thread, and then
-     * update the UI with the first earthquake in the response.
+     * Check connectivity
+     *
+     * @return
      */
-    private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList<Books>> {
-
-        String userInput = mSearchField.getText().toString();
-        String fw = null;
-      //  String sw = null;
-
-        @Override
-        protected ArrayList<Books> doInBackground(URL... urls) {
-
-            if (userInput.length() > 1) {
-                fw = firstWord(userInput);
-       //         sw = secondWord(userInput);
-            } else
-                if (userInput == null || userInput.equals("")) {
-                   Log.e(LOG_TAG, "MainActivity " + "null if user inputs nothing");
-
-                     //TOAST MSG seems to make it crash??
-                     Toast.makeText(MainActivity.this, "Please enter search terms.", Toast.LENGTH_SHORT).show();
-
-            return books;
-            }
-
-            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + fw);
-            Log.v("EditText", url.toString());
-
-                //Perform HTTP request to the URL and receive a JSON response back
-                String jsonResponse = "";
-                try {
-                    jsonResponse = makeHTTPRequest(url);
-                } catch (IOException e) {
-                    Log.e(LOG_TAG, "MainActivity " + "IOException", e);
-                }
-
-
-                //Extract relevant fields from the JSON response and create an {@link Event} object
-                //books = extractFeatureFromJson(jsonResponse);
-
-                // Return the {@link Books} object as the result of the {@link BookAsyncTask}
-
-            return extractFeatureFromJson(jsonResponse);
-            }
-
-
-        /**
-         * Update the screen with the given book (which was the result of the
-         * {@link BookAsyncTask}
-         */
-        @Override
-        protected void onPostExecute(ArrayList<Books> booksList) {
-            if (booksList == null) {
-                return;
-            }
-            updateUi(booksList);
-        }
+    public boolean isOnline() {
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected());
     }
 
     /**
@@ -180,9 +130,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return url;
     }
-
-
-
 
     /**
      * Make an HTTP request to the given URL and return a String as the response.
@@ -258,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
             JSONArray itemsArray = baseJsonResponse.getJSONArray("items");
 
             // If there are results in the features array
-            for (int i = 0; i< itemsArray.length(); i++) {
+            for (int i = 0; i < itemsArray.length(); i++) {
                 //Extract out the first feature
                 JSONObject firstFeature = itemsArray.getJSONObject(i);
                 JSONObject items = firstFeature.getJSONObject("volumeInfo");
@@ -270,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (items.has("authors")) {
                     if (authorJsonArray.length() > 0) {
-                        for (int j = 0; j < authorJsonArray.length(); j++){
+                        for (int j = 0; j < authorJsonArray.length(); j++) {
                             authors = authorJsonArray.optString(j) + "";
                         }
                     }
@@ -287,5 +234,77 @@ public class MainActivity extends AppCompatActivity {
             Log.e(LOG_TAG, "Problem parsing the book JSON results", e);
         }
         return booksList;
+    }
+
+    /**
+     * {@link AsyncTask} to perform the network request on a background thread, and then
+     * update the UI with the first earthquake in the response.
+     */
+    private class BookAsyncTask extends AsyncTask<URL, Void, ArrayList<Books>> {
+
+        String userInput = mSearchField.getText().toString();
+        String fw = null;
+
+        @Override
+        protected ArrayList<Books> doInBackground(URL... urls) {
+
+
+            if (userInput.length() > 1) {
+                fw = firstWord(userInput);
+            } else if (userInput == null || userInput.equals("")) {
+                Log.e(LOG_TAG, "MainActivity " + "null if user inputs nothing");
+
+                return books;
+            }
+
+            URL url = createUrl(GOOGLE_BOOKS_BASE_URL + fw);
+            Log.v("EditText", url.toString());
+
+            //Perform HTTP request to the URL and receive a JSON response back
+            String jsonResponse = "";
+            try {
+                jsonResponse = makeHTTPRequest(url);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "MainActivity " + "IOException", e);
+            }
+
+
+            //Extract relevant fields from the JSON response and create an {@link Event} object
+
+            // Return the {@link Books} object as the result of the {@link BookAsyncTask}
+
+            return extractFeatureFromJson(jsonResponse);
+        }
+
+
+        /**
+         * Update the screen with the given book (which was the result of the
+         * {@link BookAsyncTask}
+         */
+        @Override
+        protected void onPostExecute(ArrayList<Books> booksList) {
+
+            boolean network = isOnline();
+            Log.v(LOG_TAG, "Network is online = " + network);
+
+            if (!network) {
+                Toast.makeText(MainActivity.this, "Please connect to the internet.", Toast.LENGTH_LONG).show();
+                Log.e(LOG_TAG, "MainActivity " + "Error connecting to the network");
+            } else if (network == true) {
+
+                if (booksList == null) {
+                    return;
+                }
+                if (booksList != null) {
+                    Log.v(LOG_TAG, "size = " + booksList.size());
+                    adapter = new BooksAdapter(MainActivity.this, booksList);
+                    listView.setAdapter(adapter);
+                }
+                listView.setEmptyView(findViewById(R.id.empty_list_item));
+                listView.setAdapter(adapter);
+
+                updateUi(booksList);
+            }
+        }
     }
 }

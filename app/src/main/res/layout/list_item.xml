@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:id="@+id/list_item">
 
     <TextView
         android:id="@+id/title_heading"
@@ -21,16 +22,16 @@
         android:paddingBottom="6dp" />
 
     <TextView
-        style="@style/Headers"
         android:id="@+id/author_heading"
+        style="@style/Headers"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingBottom="3dp"
         android:text="@string/author" />
 
     <TextView
-        style="@style/AuthorResult"
         android:id="@+id/author_result"
+        style="@style/AuthorResult"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingBottom="6dp" />
